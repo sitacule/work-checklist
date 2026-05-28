@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>롯데월드타워 스탑워치</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: radial-gradient(ellipse at 50% 110%, #0d2248 0%, #06101f 50%, #020810 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+    }
+
+    /* ── 별 ── */
+    #stars-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── 도시 실루엣 ── */
+    .city {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 90px;
+      z-index: 1;
+    }
+
+    /* ── 물 반사 ── */
+    .lake {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, rgba(13, 34, 72, 0.6), rgba(2, 8, 16, 0.9));
+      z-index: 2;
+    }
+    .lake::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px, transparent 3px,
+        rgba(30, 80, 160, 0.08) 3px, rgba(30, 80, 160, 0.08) 4px
+      );
+    }
+
+    /* ── 전체 래퍼 ── */
+    .scene {
+      position: relative;
+      z-index: 10;
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── 타워 컨테이너 ── */
+    .tower-container {
+      position: relative;
+      width: 240px;
+      height: 580px;
+      margin-bottom: -2px;
+    }
+
+    /* ── 타워 몸체 ── */
+    .tower-body {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 240px;
+      height: 580px;
+      clip-path: polygon(
+        22% 100%, 2% 64%, 4% 46%, 9% 30%,
+        18% 17%, 30% 8%, 43% 3%, 50% 0%,
+        57% 3%, 70% 8%, 82% 17%, 91% 30%,
+        96% 46%, 98% 64%, 78% 100%
+      );
+      background: linear-gradient(160deg,
+        rgba(180,215,245,0.35) 0%,
+        rgba(90,150,210,0.25) 10%,
+        rgba(30,80,160,0.6)  25%,
+        rgba(12,40,100,0.8)  50%,
+        rgba(6,20,55,0.95)   75%,
+        rgba(3,10,30,1)     100%
+      );
+    }
+
+    /* 타워 유리 반사 줄 */
+    .tower-body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px, transparent 6px,
+        rgba(100,170,230,0.07) 6px, rgba(100,170,230,0.07) 7px
+      );
+    }
+
+    /* 타워 오른쪽 하이라이트 */
+    .tower-body::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 55%; right: 0; bottom: 0;
+      background: linear-gradient(to right,
+        transparent,
+        rgba(140, 200, 255, 0.06) 40%,
+        rgba(140, 200, 255, 0.12) 100%
+      );
+    }
+
+    /* ── 창문 그리드 ── */
+    .tower-windows {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 240px;
+      height: 580px;
+      clip-path: polygon(
+        22% 100%, 2% 64%, 4% 46%, 9% 30%,
+        18% 17%, 30% 8%, 43% 3%, 50% 0%,
+        57% 3%, 70% 8%, 82% 17%, 91% 30%,
+        96% 46%, 98% 64%, 78% 100%
+      );
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .windows-grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      grid-template-rows: repeat(40, 1fr);
+      gap: 1px;
+      padding: 10px;
+    }
+
+    .w {
+      background: rgba(255, 220, 140, 0.0);
+      border-radius: 1px;
+      transition: background 0.5s;
+    }
+    .w.on  { background: rgba(255, 220, 130, 0.45); box-shadow: 0 0 2px rgba(255,220,100,0.3); }
+    .w.on2 { background: rgba(180, 230, 255, 0.35); box-shadow: 0 0 2px rgba(150,210,255,0.3); }
+
+    /* ── 서울스카이 전망대 링 ── */
+    .obs-ring {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 38%;
+      width: 112px;
+      height: 8px;
+      background: linear-gradient(to bottom,
+        rgba(120,210,255,0.0),
+        rgba(120,210,255,0.9) 40%,
+        rgba(120,210,255,0.9) 60%,
+        rgba(120,210,255,0.0)
+      );
+      border-radius: 50%;
+      box-shadow:
+        0 0 12px 4px rgba(100,200,255,0.5),
+        0 0 30px 8px rgba(80,160,255,0.3);
+      pointer-events: none;
+      z-index: 5;
+    }
+    .obs-ring::before {
+      content: '서울스카이';
+      position: absolute;
+      right: -52px;
+      top: -7px;
+      font-size: 9px;
+      color: rgba(120,210,255,0.7);
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    /* ── 첨탑 빛 ── */
+    .spire-light {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 28px;
+      background: linear-gradient(to bottom, #ffffff, rgba(180,230,255,0.4), transparent);
+      border-radius: 2px;
+      box-shadow:
+        0 0 8px 3px rgba(220,240,255,0.8),
+        0 0 20px 8px rgba(160,210,255,0.5),
+        0 0 50px 15px rgba(100,180,255,0.25);
+      animation: spire-pulse 3s ease-in-out infinite;
+      z-index: 6;
+    }
+    @keyframes spire-pulse {
+      0%,100% { opacity: 1; box-shadow: 0 0 8px 3px rgba(220,240,255,0.8), 0 0 20px 8px rgba(160,210,255,0.5), 0 0 50px 15px rgba(100,180,255,0.25); }
+      50%      { opacity: 0.7; box-shadow: 0 0 5px 2px rgba(220,240,255,0.5), 0 0 12px 5px rgba(160,210,255,0.3), 0 0 30px 10px rgba(100,180,255,0.15); }
+    }
+
+    /* ── UI 패널 (타워 위에 오버레이) ── */
+    .ui-panel {
+      position: absolute;
+      bottom: 14%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 180px;
+      text-align: center;
+      z-index: 20;
+    }
+
+    .tower-label {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: rgba(120,180,240,0.6);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    /* 시간 표시 – LED 느낌 */
+    .time-main {
+      font-size: 52px;
+      font-weight: 100;
+      letter-spacing: 3px;
+      font-variant-numeric: tabular-nums;
+      color: #a8d8ff;
+      text-shadow:
+        0 0 10px rgba(100,200,255,0.9),
+        0 0 25px rgba(80,160,255,0.6),
+        0 0 50px rgba(60,130,255,0.3);
+      line-height: 1;
+    }
+
+    .time-ms {
+      font-size: 24px;
+      font-weight: 100;
+      letter-spacing: 2px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(120,190,255,0.7);
+      text-shadow: 0 0 8px rgba(100,180,255,0.6);
+      margin-bottom: 14px;
+    }
+
+    /* ── 버튼 ── */
+    .buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.18s;
+      padding: 8px 16px;
+    }
+
+    button:active { transform: scale(0.94); }
+
+    #btn-start {
+      background: linear-gradient(135deg, #1e6fc8, #0d4a9e);
+      color: #c8e8ff;
+      box-shadow: 0 0 12px rgba(30,111,200,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+      min-width: 72px;
+    }
+    #btn-start:hover { background: linear-gradient(135deg, #2a7fd8, #1555ae); }
+    #btn-start.running {
+      background: linear-gradient(135deg, #c82020, #8e0d0d);
+      box-shadow: 0 0 12px rgba(200,32,32,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+      color: #ffd0d0;
+    }
+
+    #btn-lap, #btn-reset {
+      background: rgba(255,255,255,0.06);
+      color: rgba(160,200,240,0.7);
+      border: 1px solid rgba(100,160,220,0.2);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    #btn-lap:hover, #btn-reset:hover {
+      background: rgba(100,160,220,0.12);
+      color: rgba(200,230,255,0.9);
+    }
+
+    /* ── 기단부 ── */
+    .base {
+      width: 200px;
+      height: 28px;
+      background: linear-gradient(to bottom, #0a1a38, #050e1e);
+      border-radius: 0 0 4px 4px;
+      border-top: 1px solid rgba(60,100,180,0.3);
+      position: relative;
+      z-index: 10;
+    }
+    .base::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(80,140,220,0.4), transparent);
+    }
+
+    /* ── 랩 패널 ── */
+    .laps-panel {
+      width: 280px;
+      max-height: 130px;
+      overflow-y: auto;
+      margin-top: 10px;
+      padding: 0 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(60,100,180,0.3) transparent;
+      position: relative;
+      z-index: 10;
+    }
+    .laps-panel::-webkit-scrollbar { width: 3px; }
+    .laps-panel::-webkit-scrollbar-thumb { background: rgba(60,100,180,0.3); border-radius: 2px; }
+
+    .lap-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(140,190,230,0.7);
+    }
+    .lap-item:nth-child(odd) { background: rgba(255,255,255,0.025); }
+    .lap-item .lap-num  { color: rgba(80,130,200,0.6); }
+    .lap-item .lap-time { color: rgba(160,210,255,0.85); }
+    .lap-item.fastest .lap-time { color: #48bb78; text-shadow: 0 0 6px rgba(72,187,120,0.4); }
+    .lap-item.slowest .lap-time { color: #fc8181; text-shadow: 0 0 6px rgba(252,129,129,0.4); }
+
+    /* ── 타워 반사 (물 위) ── */
+    .tower-reflection {
+      position: fixed;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%) scaleY(-1);
+      width: 240px;
+      height: 120px;
+      clip-path: polygon(
+        22% 0%, 2% 36%, 4% 54%, 78% 100%, 22% 100%
+      );
+      background: linear-gradient(to bottom,
+        rgba(3,10,30,0.0),
+        rgba(12,40,100,0.15) 40%,
+        rgba(30,80,160,0.1) 70%,
+        rgba(30,80,160,0.05) 100%
+      );
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+
+  <!-- 도시 실루엣 SVG -->
+  <svg class="city" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 90" preserveAspectRatio="none">
+    <path d="M0,90 L0,60 L30,60 L30,40 L50,40 L50,30 L70,30 L70,50 L90,50 L90,20 L110,20 L110,50
+      L130,50 L130,35 L150,35 L150,55 L170,55 L170,40 L190,40 L190,60 L220,60 L220,30 L240,30
+      L240,10 L260,10 L260,30 L280,30 L280,60 L310,60 L310,45 L330,45 L330,60 L360,60 L360,35
+      L380,35 L380,25 L400,25 L400,35 L420,35 L420,60 L460,60 L460,40 L480,40 L480,55 L510,55
+      L510,60 L560,60 L560,50 L580,50 L580,40 L600,40 L600,55 L620,55 L620,60 L650,60 L650,30
+      L670,30 L670,60 L700,60 L700,45 L720,45 L720,35 L740,35 L740,45 L760,45 L760,60 L790,60
+      L790,40 L810,40 L810,55 L840,55 L840,60 L870,60 L870,35 L890,35 L890,20 L910,20 L910,35
+      L930,35 L930,50 L960,50 L960,60 L990,60 L990,40 L1010,40 L1010,55 L1040,55 L1040,60
+      L1070,60 L1070,45 L1090,45 L1090,55 L1120,55 L1120,30 L1140,30 L1140,55 L1170,55
+      L1170,60 L1200,60 L1200,90 Z"
+      fill="#050e1e"/>
+  </svg>
+
+  <div class="lake"></div>
+  <div class="tower-reflection"></div>
+
+  <div class="scene">
+    <div class="tower-container">
+      <!-- 타워 몸체 -->
+      <div class="tower-body"></div>
+
+      <!-- 창문 그리드 -->
+      <div class="tower-windows">
+        <div class="windows-grid" id="windows-grid"></div>
+      </div>
+
+      <!-- 서울스카이 전망대 -->
+      <div class="obs-ring"></div>
+
+      <!-- 첨탑 빛 -->
+      <div class="spire-light"></div>
+
+      <!-- 스탑워치 UI -->
+      <div class="ui-panel">
+        <div class="tower-label">LOTTE WORLD TOWER</div>
+        <div class="time-main" id="display">00:00</div>
+        <div class="time-ms"  id="milliseconds">.000</div>
+        <div class="buttons">
+          <button id="btn-start">시작</button>
+          <button id="btn-lap">랩</button>
+          <button id="btn-reset">초기화</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기단부 -->
+    <div class="base"></div>
+
+    <!-- 랩 목록 -->
+    <div class="laps-panel" id="laps"></div>
+  </div>
+
+  <script>
+    /* ── 별 캔버스 ── */
+    (function() {
+      const canvas = document.getElementById('stars-canvas');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+        stars = Array.from({ length: 220 }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height * 0.75,
+          r: Math.random() * 1.2 + 0.2,
+          a: Math.random(),
+          s: Math.random() * 0.008 + 0.002,
+          d: Math.random() > 0.5 ? 1 : -1
+        }));
+      }
+
+      function drawStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach(s => {
+          s.a += s.s * s.d;
+          if (s.a > 1 || s.a < 0.1) s.d *= -1;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(200,225,255,${s.a})`;
+          ctx.fill();
+        });
+        requestAnimationFrame(drawStars);
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+      drawStars();
+    })();
+
+    /* ── 창문 그리드 ── */
+    (function() {
+      const grid = document.getElementById('windows-grid');
+      const total = 16 * 40;
+      for (let i = 0; i < total; i++) {
+        const w = document.createElement('div');
+        w.className = 'w';
+        grid.appendChild(w);
+      }
+
+      const cells = grid.querySelectorAll('.w');
+
+      function randomizeWindows() {
+        cells.forEach(c => {
+          const r = Math.random();
+          if (r < 0.38)      { c.className = 'w on';  }
+          else if (r < 0.52) { c.className = 'w on2'; }
+          else               { c.className = 'w'; }
+        });
+      }
+
+      randomizeWindows();
+      setInterval(() => {
+        const idx = Math.floor(Math.random() * cells.length);
+        const r = Math.random();
+        cells[idx].className = r < 0.4 ? 'w on' : r < 0.55 ? 'w on2' : 'w';
+      }, 180);
+    })();
+
+    /* ── 스탑워치 로직 ── */
+    let startTime = 0, elapsed = 0, timerID = null, running = false;
+    let lapTimes = [], lastLapElapsed = 0;
+
+    const display    = document.getElementById('display');
+    const msDisplay  = document.getElementById('milliseconds');
+    const btnStart   = document.getElementById('btn-start');
+    const btnLap     = document.getElementById('btn-lap');
+    const btnReset   = document.getElementById('btn-reset');
+    const lapsEl     = document.getElementById('laps');
+
+    function format(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const mil = ms % 1000;
+      return {
+        main: `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,
+        ms:   `.${String(mil).padStart(3,'0')}`
+      };
+    }
+
+    function update() {
+      elapsed = Date.now() - startTime;
+      const { main, ms } = format(elapsed);
+      display.textContent    = main;
+      msDisplay.textContent  = ms;
+    }
+
+    function renderLaps() {
+      if (!lapTimes.length) { lapsEl.innerHTML = ''; return; }
+      const fastest = Math.min(...lapTimes);
+      const slowest = lapTimes.length > 1 ? Math.max(...lapTimes) : -1;
+      lapsEl.innerHTML = [...lapTimes].reverse().map((t, ri) => {
+        const i = lapTimes.length - 1 - ri;
+        const { main, ms } = format(t);
+        const cls = t === fastest ? 'fastest' : t === slowest ? 'slowest' : '';
+        return `<div class="lap-item ${cls}">
+          <span class="lap-num">랩 ${i + 1}</span>
+          <span class="lap-time">${main}${ms}</span>
+        </div>`;
+      }).join('');
+    }
+
+    btnStart.addEventListener('click', () => {
+      if (!running) {
+        startTime = Date.now() - elapsed;
+        timerID = setInterval(update, 10);
+        running = true;
+        btnStart.textContent = '정지';
+        btnStart.classList.add('running');
+      } else {
+        clearInterval(timerID);
+        running = false;
+        btnStart.textContent = '시작';
+        btnStart.classList.remove('running');
+      }
+    });
+
+    btnLap.addEventListener('click', () => {
+      if (!running) return;
+      lapTimes.push(elapsed - lastLapElapsed);
+      lastLapElapsed = elapsed;
+      renderLaps();
+    });
+
+    btnReset.addEventListener('click', () => {
+      clearInterval(timerID);
+      running = false; elapsed = 0; lastLapElapsed = 0; lapTimes = [];
+      display.textContent   = '00:00';
+      msDisplay.textContent = '.000';
+      btnStart.textContent  = '시작';
+      btnStart.classList.remove('running');
+      lapsEl.innerHTML = '';
+    });
+  </script>
+</body>
+</html>
