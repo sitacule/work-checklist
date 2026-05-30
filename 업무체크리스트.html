@@ -195,6 +195,53 @@ td input:focus,td select:focus{background:#fff;border:1px solid var(--primary);b
   .fg{grid-template-columns:1fr 1fr}
   .tabs .tab{padding:10px 10px;font-size:11px}
 }
+
+/* ── REPORT ── */
+.rpt-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 5px rgba(0,0,0,.08);padding:0}
+.rpt-ctrl{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.rpt-ctrl select,.rpt-ctrl input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;height:32px}
+.rpt-ctrl label{font-size:12px;font-weight:600;color:#555}
+.rpt-doc{background:#fff;border-radius:10px;box-shadow:0 1px 5px rgba(0,0,0,.08);padding:40px 48px;max-width:860px;margin:0 auto}
+.rpt-doc .r-header{text-align:center;border-bottom:3px double var(--primary);padding-bottom:20px;margin-bottom:24px}
+.rpt-doc .r-title{font-size:22px;font-weight:700;color:var(--primary);letter-spacing:2px;margin-bottom:10px}
+.rpt-doc .r-sub{font-size:12px;color:#666;display:flex;justify-content:center;gap:24px;flex-wrap:wrap}
+.rpt-doc .r-sub span{display:flex;align-items:center;gap:4px}
+.rpt-section{margin-bottom:28px}
+.rpt-section-title{font-size:13px;font-weight:700;color:#fff;background:var(--primary);padding:7px 14px;border-radius:4px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rpt-section-title.green{background:#2E7D32}
+.rpt-section-title.orange{background:#E65100}
+.rpt-section-title.blue{background:#1565C0}
+.rpt-section-title.gray{background:#546E7A}
+.rpt-section-title.purple{background:#6A1B9A}
+.rpt-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px}
+.rpt-table th{background:#f5f7fa;color:var(--primary);padding:7px 10px;border:1px solid #dde;text-align:center;font-weight:700;font-size:11px;white-space:nowrap}
+.rpt-table td{padding:7px 10px;border:1px solid #eee;vertical-align:top;line-height:1.5}
+.rpt-table tr:hover td{background:#fafbff}
+.rpt-table .num{text-align:center;color:#888}
+.rpt-table .center{text-align:center}
+.rpt-none{color:#bbb;font-size:12px;padding:12px 14px;border:1px dashed #e0e0e0;border-radius:6px;text-align:center}
+.rpt-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:8px}
+.rpt-kpi{background:#f8faff;border:1px solid #dde;border-radius:8px;padding:12px;text-align:center}
+.rpt-kpi .kv{font-size:24px;font-weight:700;color:var(--primary)}
+.rpt-kpi .kl{font-size:11px;color:#888;margin-top:2px}
+.rpt-kpi.g .kv{color:#2E7D32} .rpt-kpi.b .kv{color:#1565C0} .rpt-kpi.r .kv{color:#C62828}
+.rpt-member-block{border:1px solid #eee;border-radius:8px;margin-bottom:12px;overflow:hidden}
+.rpt-member-head{background:#f5f7fa;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #eee}
+.rpt-member-body{padding:10px 14px}
+.sig-row{display:flex;justify-content:flex-end;gap:32px;margin-top:40px;padding-top:20px;border-top:1px solid #ddd}
+.sig-box{text-align:center;min-width:90px}
+.sig-box .sig-title{font-size:11px;color:#888;margin-bottom:24px}
+.sig-box .sig-name{font-size:13px;font-weight:700;border-bottom:1px solid #333;padding-bottom:2px}
+.rpt-note-area{background:#fffef0;border:1px solid #f0e68c;border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:6px;min-height:40px;white-space:pre-wrap}
+.rpt-note-input{width:100%;padding:8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;resize:vertical;min-height:56px}
+
+@media print{
+  .topbar,.tabs,.rpt-ctrl,.btn,.del-btn,.add-panel,.overlay{display:none!important}
+  .page{display:block!important;padding:0!important}
+  body{background:#fff}
+  .rpt-doc{box-shadow:none;padding:20px;max-width:100%}
+  @page{margin:15mm}
+}
 </style>
 </head>
 <body>
@@ -485,6 +532,42 @@ td input:focus,td select:focus{background:#fff;border:1px solid var(--primary);b
   </div>
 </div>
 
+<!-- ════ PAGE: 주간보고 ════ -->
+<div id="pg-weekly" class="page">
+  <div class="rpt-ctrl">
+    <label>보고 기준 주</label>
+    <input type="week" id="wk-sel" onchange="renderWeekly()">
+    <div id="wk-member-wrap" style="display:none">
+      <select id="wk-member" onchange="renderWeekly()"><option value="">전체 팀원</option></select>
+    </div>
+    <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+      <input type="checkbox" id="wk-include-done" checked onchange="renderWeekly()"> 완료업무 포함
+    </label>
+    <button class="btn btn-p" onclick="printReport('pg-weekly')">🖨 인쇄 / PDF 저장</button>
+  </div>
+  <div class="rpt-doc" id="weekly-doc"></div>
+</div>
+
+<!-- ════ PAGE: 월간보고 ════ -->
+<div id="pg-monthly-report" class="page">
+  <div class="rpt-ctrl">
+    <label>기준연도</label>
+    <select id="mr-year" onchange="renderMonthlyReport()"></select>
+    <label>월</label>
+    <select id="mr-month" onchange="renderMonthlyReport()">
+      <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+      <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+      <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+      <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+    </select>
+    <div id="mr-member-wrap" style="display:none">
+      <select id="mr-member" onchange="renderMonthlyReport()"><option value="">전체 팀원</option></select>
+    </div>
+    <button class="btn btn-p" onclick="printReport('pg-monthly-report')">🖨 인쇄 / PDF 저장</button>
+  </div>
+  <div class="rpt-doc" id="monthly-report-doc"></div>
+</div>
+
 <script>
 // ══════════════════════════════════════
 // STATE
@@ -682,13 +765,19 @@ function afterLogin() {
 // TABS
 // ══════════════════════════════════════
 const MEMBER_TABS  = [
-  {id:'my',          label:'📋 내 업무'},
-  {id:'my-priority', label:'📊 우선순위별'},
-  {id:'my-monthly',  label:'📅 월별 현황'},
+  {id:'my',              label:'📋 내 업무'},
+  {id:'my-priority',     label:'📊 우선순위별'},
+  {id:'my-monthly',      label:'📅 월별 현황'},
+  {id:'weekly',          label:'📝 주간보고'},
+  {id:'monthly-report',  label:'📑 월간보고'},
 ];
-const LEADER_TABS  = [{id:'all',    label:'📋 전체 현황'},
-                      {id:'priority',label:'📊 우선순위별'},
-                      {id:'monthly', label:'📅 월별 현황'}];
+const LEADER_TABS  = [
+  {id:'all',             label:'📋 전체 현황'},
+  {id:'priority',        label:'📊 우선순위별'},
+  {id:'monthly',         label:'📅 월별 현황'},
+  {id:'weekly',          label:'📝 주간보고'},
+  {id:'monthly-report',  label:'📑 월간보고'},
+];
 
 function buildTabs() {
   const tabs = currentRole==='leader' ? LEADER_TABS : MEMBER_TABS;
@@ -704,12 +793,14 @@ function showTab(id) {
   if(tab) tab.classList.add('on');
   const pg=document.getElementById('pg-'+id);
   if(pg) pg.classList.add('on');
-  if(id==='my')           renderMy();
-  if(id==='my-priority')  renderMyPriority();
-  if(id==='my-monthly')   renderMyMonthly();
-  if(id==='all')          { buildMemberFilter('all-fm'); renderAll(); renderOverview(); }
-  if(id==='priority')     renderPriority();
-  if(id==='monthly')      renderMonthly();
+  if(id==='my')              renderMy();
+  if(id==='my-priority')   renderMyPriority();
+  if(id==='my-monthly')    renderMyMonthly();
+  if(id==='all')           { buildMemberFilter('all-fm'); renderAll(); renderOverview(); }
+  if(id==='priority')      renderPriority();
+  if(id==='monthly')       renderMonthly();
+  if(id==='weekly')        initWeekly();
+  if(id==='monthly-report') initMonthlyReport();
 }
 
 function refresh() {
@@ -1060,6 +1151,329 @@ function renderMonthly() {
         <span style="color:#ccc;font-size:11px;min-width:68px;text-align:right">${t.due||''}</span>
       </div>`;}).join('')}
     </div>`).join('')||'<p style="color:#ccc;font-size:12px;padding:14px 0">해당 연도의 업무가 없습니다.</p>';
+}
+
+// ══════════════════════════════════════
+// REPORT UTILITIES
+// ══════════════════════════════════════
+function weekRange(weekStr) {
+  const [yr, wk] = weekStr.split('-W').map(Number);
+  const jan4 = new Date(yr, 0, 4);
+  const startOfW1 = new Date(jan4);
+  startOfW1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+  const mon = new Date(startOfW1);
+  mon.setDate(startOfW1.getDate() + (wk - 1) * 7);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return { mon, sun,
+    monStr: mon.toISOString().slice(0,10),
+    sunStr: sun.toISOString().slice(0,10),
+    label: `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${mon.getDate()}일(월) ~ ${sun.getMonth()+1}월 ${sun.getDate()}일(일)`
+  };
+}
+function thisWeekStr() {
+  const d = new Date();
+  const yr = d.getFullYear();
+  const startOfYr = new Date(yr, 0, 1);
+  const wk = Math.ceil(((d - startOfYr) / 86400000 + startOfYr.getDay() + 1) / 7);
+  return `${yr}-W${String(wk).padStart(2,'0')}`;
+}
+function fmtDate(s) {
+  if (!s) return '-';
+  const [y,m,d] = s.split('-');
+  return `${y}.${m}.${d}`;
+}
+function nowKorDate() {
+  const d = new Date();
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+}
+function inMonthFn(t, yr, mo) {
+  const d = t.due || t.date || '';
+  return d.startsWith(`${yr}-${String(mo).padStart(2,'0')}`);
+}
+function printReport(pageId) {
+  document.querySelectorAll('.page').forEach(p => { p._wasOn = p.classList.contains('on'); p.classList.remove('on'); });
+  const pg = document.getElementById(pageId);
+  if (pg) pg.classList.add('on');
+  setTimeout(() => {
+    window.print();
+    document.querySelectorAll('.page').forEach(p => { if (p._wasOn) p.classList.add('on'); });
+  }, 200);
+}
+
+// ══════════════════════════════════════
+// WEEKLY REPORT
+// ══════════════════════════════════════
+function initWeekly() {
+  const sel = document.getElementById('wk-sel');
+  if (!sel.value) sel.value = thisWeekStr();
+  const wrap = document.getElementById('wk-member-wrap');
+  if (currentRole === 'leader') {
+    wrap.style.display = '';
+    buildMemberFilter('wk-member');
+  } else {
+    wrap.style.display = 'none';
+  }
+  renderWeekly();
+}
+
+function renderWeekly() {
+  const wkStr = document.getElementById('wk-sel').value;
+  if (!wkStr) return;
+  const { monStr, sunStr, label } = weekRange(wkStr);
+  const inclDone = document.getElementById('wk-include-done').checked;
+  const filterMember = currentRole === 'leader'
+    ? (document.getElementById('wk-member').value || null)
+    : currentUser;
+
+  const isTarget = t => {
+    if (filterMember && t.member !== filterMember) return false;
+    const d = t.due || t.date || '';
+    return d >= monStr && d <= sunStr;
+  };
+  const weekTasks = tasks.filter(isTarget);
+
+  const nextMonDate = new Date(sunStr); nextMonDate.setDate(nextMonDate.getDate() + 1);
+  const nextSunDate = new Date(sunStr); nextSunDate.setDate(nextSunDate.getDate() + 7);
+  const nextMonStr = nextMonDate.toISOString().slice(0,10);
+  const nextSunStr = nextSunDate.toISOString().slice(0,10);
+  const nextWeekTasks = tasks.filter(t => {
+    if (filterMember && t.member !== filterMember) return false;
+    const d = t.due || t.date || '';
+    return d >= nextMonStr && d <= nextSunStr && t.status !== '처리완료';
+  });
+
+  const doneTasks  = weekTasks.filter(t => t.status === '처리완료');
+  const ingTasks   = weekTasks.filter(t => t.status === '진행중');
+  const holdTasks  = weekTasks.filter(t => t.status === '보류');
+  const overTasks  = weekTasks.filter(t => t.due && t.due < today() && t.status !== '처리완료');
+
+  const memberList = filterMember
+    ? [filterMember]
+    : [...new Set([...cfg.members, ...tasks.map(t=>t.member).filter(Boolean)])];
+
+  const memberRows = memberList.map(m => {
+    const mt   = weekTasks.filter(t => t.member === m);
+    const done = mt.filter(t => t.status === '처리완료');
+    const ing  = mt.filter(t => t.status === '진행중');
+    const hold = mt.filter(t => t.status === '보류');
+    const next = nextWeekTasks.filter(t => t.member === m);
+    if (!mt.length && !next.length) return '';
+    const col = memberColor(m);
+    const tableH = `<tr><th style="width:40px">우선순위</th><th>업무명</th><th>진행내용</th><th style="width:80px">완료예정일</th><th>비고</th></tr>`;
+    const tRow = t => `<tr ${t.due&&t.due<today()&&t.status!=='처리완료'?'style="background:#fff5f5"':''}>
+      <td class="center">${t.priority?`<span class="bdg bdg-${t.priority}">${t.priority}</span>`:'-'}</td>
+      <td><b>${esc(t.name)}</b></td><td style="color:#555">${esc(t.desc||'')}</td>
+      <td class="center" style="${t.due&&t.due<today()&&t.status!=='처리완료'?'color:#E53935;font-weight:600':''}">${fmtDate(t.due)}${t.due&&t.due<today()&&t.status!=='처리완료'?' ⚠':''}</td>
+      <td style="color:#888">${esc(t.note||'')}</td></tr>`;
+    return `<div class="rpt-member-block">
+      <div class="rpt-member-head">
+        <span style="width:26px;height:26px;border-radius:50%;background:${col};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${initials(m)}</span>
+        <span style="font-weight:700;font-size:13px">${esc(m)}</span>
+        <span style="margin-left:auto;font-size:11px;color:#888">이번 주 ${mt.length}건 | 완료 ${done.length} · 진행 ${ing.length}</span>
+      </div>
+      <div class="rpt-member-body">
+        ${inclDone && done.length ? `<div style="font-size:11px;font-weight:700;color:#2E7D32;margin:6px 0 4px">✅ 완료 업무 (${done.length}건)</div>
+          <table class="rpt-table" style="margin-bottom:10px">${tableH}${done.map(tRow).join('')}</table>` : ''}
+        ${ing.length ? `<div style="font-size:11px;font-weight:700;color:#1565C0;margin:6px 0 4px">🔄 진행중 업무 (${ing.length}건)</div>
+          <table class="rpt-table" style="margin-bottom:10px">${tableH}${ing.map(tRow).join('')}</table>` : ''}
+        ${hold.length ? `<div style="font-size:11px;font-weight:700;color:#6A1B9A;margin:6px 0 4px">⏸ 보류 업무 (${hold.length}건)</div>
+          <table class="rpt-table" style="margin-bottom:10px">
+            <tr><th>업무명</th><th>진행내용</th><th>비고</th></tr>
+            ${hold.map(t=>`<tr><td>${esc(t.name)}</td><td>${esc(t.desc||'')}</td><td>${esc(t.note||'')}</td></tr>`).join('')}
+          </table>` : ''}
+        ${next.length ? `<div style="font-size:11px;font-weight:700;color:#E65100;margin:6px 0 4px">📌 다음 주 예정 (${next.length}건)</div>
+          <table class="rpt-table">
+            <tr><th style="width:40px">우선순위</th><th>업무명</th><th>진행내용</th><th style="width:80px">완료예정일</th></tr>
+            ${next.map(t=>`<tr><td class="center">${t.priority?`<span class="bdg bdg-${t.priority}">${t.priority}</span>`:'-'}</td>
+              <td>${esc(t.name)}</td><td style="color:#555">${esc(t.desc||'')}</td>
+              <td class="center">${fmtDate(t.due)}</td></tr>`).join('')}
+          </table>` : ''}
+        ${!mt.length && !next.length ? '<div class="rpt-none">해당 주차 업무 없음</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const signers = currentRole === 'leader' ? ['팀원','팀장'] : ['작성자','팀장'];
+  document.getElementById('weekly-doc').innerHTML = `
+    <div class="r-header">
+      <div class="r-title">주 간 업 무 보 고</div>
+      <div class="r-sub">
+        <span>📅 보고기간 : ${label}</span>
+        <span>📋 보고일 : ${nowKorDate()}</span>
+        <span>👤 보고자 : ${currentRole==='leader'?cfg.leader:currentUser}</span>
+      </div>
+    </div>
+    <div class="rpt-section">
+      <div class="rpt-section-title">📊 이번 주 업무 요약</div>
+      <div class="rpt-summary-grid">
+        <div class="rpt-kpi"><div class="kv">${weekTasks.length}</div><div class="kl">총 업무</div></div>
+        <div class="rpt-kpi g"><div class="kv">${doneTasks.length}</div><div class="kl">완료</div></div>
+        <div class="rpt-kpi b"><div class="kv">${ingTasks.length}</div><div class="kl">진행중</div></div>
+        <div class="rpt-kpi"><div class="kv" style="color:#6A1B9A">${holdTasks.length}</div><div class="kl">보류</div></div>
+        <div class="rpt-kpi r"><div class="kv">${overTasks.length}</div><div class="kl">기한초과</div></div>
+        <div class="rpt-kpi"><div class="kv">${nextWeekTasks.length}</div><div class="kl">다음 주 예정</div></div>
+      </div>
+    </div>
+    <div class="rpt-section">
+      <div class="rpt-section-title">👥 ${filterMember?filterMember+'님':'팀원별'} 업무 상세</div>
+      ${memberRows || '<div class="rpt-none">이번 주 등록된 업무가 없습니다.</div>'}
+    </div>
+    <div class="sig-row">
+      ${signers.map(s=>`<div class="sig-box"><div class="sig-title">${s}</div><div class="sig-name">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>`).join('')}
+    </div>`;
+}
+
+// ══════════════════════════════════════
+// MONTHLY REPORT
+// ══════════════════════════════════════
+function initMonthlyReport() {
+  const yrSel = document.getElementById('mr-year');
+  const moSel = document.getElementById('mr-month');
+  const years = [...new Set([new Date().getFullYear().toString(),
+    ...tasks.map(t=>(t.date||t.due||'').slice(0,4)).filter(Boolean)])].sort((a,b)=>b-a);
+  yrSel.innerHTML = years.map(y=>`<option value="${y}">${y}년</option>`).join('');
+  if (!moSel.value) moSel.value = String(new Date().getMonth()+1);
+  const wrap = document.getElementById('mr-member-wrap');
+  if (currentRole === 'leader') { wrap.style.display=''; buildMemberFilter('mr-member'); }
+  else wrap.style.display = 'none';
+  renderMonthlyReport();
+}
+
+function renderMonthlyReport() {
+  const yr = parseInt(document.getElementById('mr-year').value || new Date().getFullYear());
+  const mo = parseInt(document.getElementById('mr-month').value || new Date().getMonth()+1);
+  const filterMember = currentRole==='leader'
+    ? (document.getElementById('mr-member').value||null) : currentUser;
+  const isTarget = t => (!filterMember||t.member===filterMember) && inMonthFn(t,yr,mo);
+  const moTasks = tasks.filter(isTarget);
+  const done  = moTasks.filter(t=>t.status==='처리완료');
+  const ing   = moTasks.filter(t=>t.status==='진행중');
+  const hold  = moTasks.filter(t=>t.status==='보류');
+  const over  = moTasks.filter(t=>t.due&&t.due<today()&&t.status!=='처리완료');
+  const pct   = moTasks.length?Math.round(done.length/moTasks.length*100):0;
+  const nextMo=mo===12?1:mo+1, nextYr=mo===12?yr+1:yr;
+  const nextTasks=tasks.filter(t=>(!filterMember||t.member===filterMember)&&inMonthFn(t,nextYr,nextMo)&&t.status!=='처리완료');
+  const priStats=['A','B','C','D'].map(p=>({p,
+    all:moTasks.filter(t=>t.priority===p),
+    done:moTasks.filter(t=>t.priority===p&&t.status==='처리완료')}));
+  const memberList = filterMember?[filterMember]
+    :[...new Set([...cfg.members,...tasks.map(t=>t.member).filter(Boolean)])];
+  const showMemberCol = !filterMember && memberList.length > 1;
+
+  const memberSummaryRows = memberList.map(m=>{
+    const mt=moTasks.filter(t=>t.member===m);
+    if(!mt.length) return '';
+    const md=mt.filter(t=>t.status==='처리완료'), mi=mt.filter(t=>t.status==='진행중'), mh=mt.filter(t=>t.status==='보류');
+    const mpct=mt.length?Math.round(md.length/mt.length*100):0;
+    return `<tr><td class="center">${esc(m)}</td><td class="center">${mt.length}</td>
+      <td class="center" style="color:#2E7D32;font-weight:600">${md.length}</td>
+      <td class="center" style="color:#1565C0">${mi.length}</td>
+      <td class="center" style="color:#6A1B9A">${mh.length}</td>
+      <td><div style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;height:6px;background:#eee;border-radius:3px"><div style="height:100%;width:${mpct}%;background:#43A047;border-radius:3px"></div></div>
+        <span style="font-weight:600;color:#2E7D32;font-size:11px;min-width:30px">${mpct}%</span>
+      </div></td></tr>`;
+  }).filter(Boolean).join('');
+
+  let sec=1;
+  const sn=()=>sec++;
+  const colH = showMemberCol?'<th style="width:70px">담당자</th>':'';
+  const colD = t => showMemberCol?`<td class="center">${esc(t.member||'')}</td>`:'';
+  const taskRow = (t,showDue=true)=>`<tr ${t.due&&t.due<today()&&t.status!=='처리완료'?'style="background:#fff5f5"':''}>
+    <td class="center">${t.priority?`<span class="bdg bdg-${t.priority}">${t.priority}</span>`:'-'}</td>
+    ${colD(t)}<td><b>${esc(t.name)}</b></td><td style="color:#555">${esc(t.desc||'')}</td>
+    ${showDue?`<td class="center" style="${t.due&&t.due<today()&&t.status!=='처리완료'?'color:#E53935;font-weight:600':''}">${fmtDate(t.due)}${t.due&&t.due<today()&&t.status!=='처리완료'?' ⚠':''}</td>`:''}
+    <td style="color:#888">${esc(t.note||'')}</td></tr>`;
+
+  const signers = currentRole==='leader'?['팀장','대표이사']:['작성자','팀장'];
+  document.getElementById('monthly-report-doc').innerHTML = `
+    <div class="r-header">
+      <div class="r-title">월 간 업 무 보 고</div>
+      <div class="r-sub">
+        <span>📅 보고기간 : ${yr}년 ${mo}월</span>
+        <span>📋 보고일 : ${nowKorDate()}</span>
+        <span>👤 보고자 : ${currentRole==='leader'?cfg.leader:currentUser}</span>
+        ${filterMember&&filterMember!==currentUser?`<span>담당자 : ${filterMember}</span>`:''}
+      </div>
+    </div>
+
+    <div class="rpt-section">
+      <div class="rpt-section-title green">${sn()}. ${yr}년 ${mo}월 업무 실적 요약</div>
+      <div class="rpt-summary-grid">
+        <div class="rpt-kpi"><div class="kv">${moTasks.length}</div><div class="kl">총 업무건수</div></div>
+        <div class="rpt-kpi g"><div class="kv">${done.length}</div><div class="kl">완료</div></div>
+        <div class="rpt-kpi b"><div class="kv">${ing.length}</div><div class="kl">진행중</div></div>
+        <div class="rpt-kpi"><div class="kv" style="color:#6A1B9A">${hold.length}</div><div class="kl">보류</div></div>
+        <div class="rpt-kpi r"><div class="kv">${over.length}</div><div class="kl">기한초과</div></div>
+        <div class="rpt-kpi g"><div class="kv">${pct}%</div><div class="kl">완료율</div></div>
+      </div>
+    </div>
+
+    ${showMemberCol && memberSummaryRows ? `
+    <div class="rpt-section">
+      <div class="rpt-section-title blue">${sn()}. 팀원별 업무 현황</div>
+      <table class="rpt-table">
+        <tr><th>담당자</th><th>전체</th><th>완료</th><th>진행중</th><th>보류</th><th style="width:160px">완료율</th></tr>
+        ${memberSummaryRows}
+      </table>
+    </div>` : ''}
+
+    <div class="rpt-section">
+      <div class="rpt-section-title orange">${sn()}. 우선순위별 달성 현황</div>
+      <table class="rpt-table">
+        <tr><th>등급</th><th>구분</th><th>전체</th><th>완료</th><th>진행중</th><th>보류</th><th>완료율</th></tr>
+        ${priStats.map(s=>{
+          if(!s.all.length) return '';
+          const p=Math.round(s.done.length/s.all.length*100);
+          const lb={A:'급함·중요',B:'급함·덜중요',C:'중요·덜급',D:'덜중요·덜급'};
+          return `<tr><td class="center"><span class="bdg bdg-${s.p}">${s.p}</span></td>
+            <td>${lb[s.p]}</td><td class="center">${s.all.length}</td>
+            <td class="center" style="color:#2E7D32;font-weight:600">${s.done.length}</td>
+            <td class="center" style="color:#1565C0">${s.all.filter(t=>t.status==='진행중').length}</td>
+            <td class="center" style="color:#6A1B9A">${s.all.filter(t=>t.status==='보류').length}</td>
+            <td class="center" style="font-weight:600;color:${p>=80?'#2E7D32':p>=50?'#F57F17':'#C62828'}">${p}%</td></tr>`;
+        }).filter(Boolean).join('')||`<tr><td colspan="7" class="center" style="color:#ccc">해당 없음</td></tr>`}
+      </table>
+    </div>
+
+    <div class="rpt-section">
+      <div class="rpt-section-title green">${sn()}. 주요 완료 업무</div>
+      ${done.length?`<table class="rpt-table">
+        <tr><th style="width:40px">우선순위</th>${colH}<th>업무명</th><th>진행내용</th><th style="width:78px">완료일</th><th>비고</th></tr>
+        ${done.slice(0,20).map(t=>taskRow(t)).join('')}
+      </table>`:'<div class="rpt-none">이번 달 완료된 업무가 없습니다.</div>'}
+    </div>
+
+    <div class="rpt-section">
+      <div class="rpt-section-title blue">${sn()}. 진행중 업무 현황</div>
+      ${ing.length?`<table class="rpt-table">
+        <tr><th style="width:40px">우선순위</th>${colH}<th>업무명</th><th>진행내용</th><th style="width:78px">완료예정일</th><th>비고</th></tr>
+        ${ing.map(t=>taskRow(t)).join('')}
+      </table>`:'<div class="rpt-none">진행중인 업무가 없습니다.</div>'}
+    </div>
+
+    ${hold.length?`<div class="rpt-section">
+      <div class="rpt-section-title gray">${sn()}. 보류 업무</div>
+      <table class="rpt-table">
+        <tr><th style="width:40px">우선순위</th>${colH}<th>업무명</th><th>진행내용 / 보류사유</th><th>비고</th></tr>
+        ${hold.map(t=>`<tr><td class="center">${t.priority?`<span class="bdg bdg-${t.priority}">${t.priority}</span>`:'-'}</td>
+          ${colD(t)}<td>${esc(t.name)}</td><td style="color:#555">${esc(t.desc||'')}</td><td>${esc(t.note||'')}</td></tr>`).join('')}
+      </table>
+    </div>`:''}
+
+    <div class="rpt-section">
+      <div class="rpt-section-title gray">${sn()}. ${nextYr}년 ${nextMo}월 업무 계획</div>
+      ${nextTasks.length?`<table class="rpt-table">
+        <tr><th style="width:40px">우선순위</th>${colH}<th>업무명</th><th>내용</th><th style="width:78px">완료예정일</th></tr>
+        ${nextTasks.map(t=>`<tr><td class="center">${t.priority?`<span class="bdg bdg-${t.priority}">${t.priority}</span>`:'-'}</td>
+          ${colD(t)}<td>${esc(t.name)}</td><td style="color:#555">${esc(t.desc||'')}</td>
+          <td class="center">${fmtDate(t.due)}</td></tr>`).join('')}
+      </table>`:'<div class="rpt-none">다음 달 예정 업무가 없습니다. 업무 등록 시 완료예정일을 다음 달로 설정하세요.</div>'}
+    </div>
+
+    <div class="sig-row">
+      ${signers.map(s=>`<div class="sig-box"><div class="sig-title">${s}</div><div class="sig-name">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>`).join('')}
+    </div>`;
 }
 
 // ══════════════════════════════════════
